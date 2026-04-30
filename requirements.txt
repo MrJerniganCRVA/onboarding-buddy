@@ -1,6 +1,7 @@
 anthropic
 chromadb
 langchain
+langchain-text-splitters
 langchain-anthropic
 langchain-chroma
 langchain-community

@@ -1,0 +1,109 @@
+Acme Corp — Payments Team Architecture Notes
+Last updated: April 2025
+Author: Devon Castillo (with input from Marcus Webb)
+
+=== OVERVIEW ===
+The Payments system processes card-present and card-not-present transactions for Acme Corp's
+merchant platform. It handles authorization, capture, refund, and dispute flows across
+multiple payment processor integrations.
+
+=== TECH STACK ===
+Backend (core services):
+  - Language: Java 21 (Spring Boot 3.x)
+  - Database: PostgreSQL 15 (primary), Redis 7 (caching, idempotency keys, rate limiting)
+  - Message queue: Apache Kafka (async event streaming between internal services)
+  - API style: REST (versioned under /v1/, /v2/); internal services use gRPC
+
+Frontend / BFF:
+  - Language: TypeScript (React 18 for checkout UI)
+  - BFF layer: Node.js / Express (handles aggregation and auth for frontend calls)
+
+Data pipeline:
+  - Apache Airflow (orchestration)
+  - Python (ETL scripts), dbt (SQL transformations)
+  - Storage: S3 (raw), Snowflake (analytics warehouse)
+
+Infrastructure:
+  - Cloud: AWS (primary regions: us-east-1, eu-west-1)
+  - Containers: Docker + Kubernetes (EKS)
+  - CI/CD: GitHub Actions → ECR → EKS rolling deploy
+  - Secrets management: AWS Secrets Manager
+  - Feature flags: LaunchDarkly
+
+=== KEY SERVICES ===
+
+1. Payment API Service (payments-api)
+   - Public-facing REST API; handles charge, capture, refund, cancel endpoints
+   - Enforces API versioning, rate limiting, idempotency
+   - Owner: Marcus Webb
+
+2. Gateway Router (gateway-router)
+   - Routes transactions to the correct processor (Stripe, Adyen, Chase Paymentech)
+   - Applies failover logic: if primary processor returns 5xx, retries on secondary
+   - Owner: Devon Castillo
+
+3. Fraud Scoring Service (fraud-scorer)
+   - Real-time scoring pipeline: rules engine + ML model (XGBoost)
+   - Exposes gRPC endpoint called synchronously during authorization flow
+   - Model artifacts stored in S3, loaded at service startup
+   - Owner: Amara Osei
+
+4. Card Vault Service (card-vault)
+   - Stores and tokenizes card PANs to maintain PCI DSS scope isolation
+   - Integrated with AWS KMS for envelope encryption of stored tokens
+   - Only service permitted to handle raw PANs
+   - Owner: Marcus Webb
+
+5. Webhook Service (webhook-dispatcher)
+   - Delivers payment lifecycle events to merchant endpoints
+   - Implements retry with exponential backoff; DLQ in SQS for failed deliveries
+   - Owner: Devon Castillo
+
+6. Reconciliation Service (recon-service)
+   - Runs nightly batch job matching internal transaction records against
+     processor settlement files
+   - Flags discrepancies for manual review in the Finance dashboard
+   - Owner: Lena Park
+
+=== DATA FLOW ===
+1. Merchant calls POST /v2/charges (payments-api)
+2. payments-api validates request, checks idempotency key, calls fraud-scorer via gRPC
+3. If fraud score < threshold, payments-api calls gateway-router
+4. gateway-router selects processor, tokenizes card via card-vault, submits authorization
+5. Processor response flows back through gateway-router → payments-api → merchant
+6. Kafka event emitted: payment.authorized (consumed by webhook-dispatcher, recon-service)
+
+=== KNOWN TECHNICAL DEBT ===
+
+TD-001: Dual-write pattern in TransactionRepository (HIGH PRIORITY)
+  PostgreSQL and a legacy MySQL 5.7 instance are both written to for transactions.
+  The MySQL instance is from the pre-migration era and is scheduled for decommission
+  in Q3 2025. Until then, dual-write adds ~8ms latency and creates consistency risk.
+  Owner: Devon Castillo. Tracking ticket: PAY-3301.
+
+TD-002: Synchronous fraud scoring in critical path (MEDIUM PRIORITY)
+  The fraud-scorer gRPC call is in the synchronous authorization path, adding p99 ~40ms.
+  Plan is to move to async pre-scoring with a cached result, but this requires changes
+  to the checkout session model. Planned for Q3 2025.
+  Owner: Amara Osei. Tracking ticket: PAY-3418.
+
+TD-003: Hardcoded processor priority list (LOW PRIORITY)
+  The failover priority order in gateway-router is hardcoded in application.yml.
+  Should be moved to a database-backed configuration to enable runtime changes without
+  a deploy. No active owner; estimated 3-point story.
+  Tracking ticket: PAY-3199.
+
+TD-004: Missing structured logging in BFF layer (LOW PRIORITY)
+  The Node.js BFF uses console.log throughout instead of a structured logger (e.g., pino).
+  This makes log aggregation in Datadog inconsistent. Owner: Sasha Okonkwo.
+  Tracking ticket: PAY-3445.
+
+TD-005: Test coverage gaps in card-vault (HIGH PRIORITY)
+  Unit test coverage on card-vault is 54%, well below the 80% team standard.
+  This service is PCI-scoped and coverage must be improved before next audit (Q2 2025).
+  Owner: Marcus Webb. Tracking ticket: PAY-3502.
+
+=== API CONTRACTS ===
+All public API contracts are documented in the internal developer portal (docs.acmecorp.internal/payments).
+API versioning policy: additive changes on current version; breaking changes require a new version.
+Marcus Webb is the designated API contract owner — all breaking changes require his sign-off.

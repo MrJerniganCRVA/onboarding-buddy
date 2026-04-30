@@ -1,1 +1,83 @@
-Here is where the team handbook goes
+Acme Corp — Payments Team Handbook
+Last updated: April 2025
+Maintained by: Priya Nair (Engineering Manager)
+
+=== WELCOME ===
+Welcome to the Payments team at Acme Corp! This handbook covers how we work day-to-day.
+If something is missing or outdated, please open a PR to update this document.
+
+=== SPRINT CYCLE ===
+We run two-week sprints.
+- Sprint starts: Monday
+- Sprint ends: Friday (two weeks later)
+- Sprint planning: Monday of sprint start, 10:00 AM ET (1 hour)
+- Sprint demo: Last Friday of sprint, 2:00 PM ET
+- Sprint retrospective: Last Friday of sprint, 3:00 PM ET (30 minutes, team only)
+
+Backlog grooming happens weekly on Wednesdays at 11:00 AM ET.
+Stories are estimated using Fibonacci points (1, 2, 3, 5, 8). Anything larger than 8 must be split.
+
+=== STANDUPS ===
+Daily async standup via Slack in #payments-standup by 9:30 AM ET.
+Format:
+  - What did I do yesterday?
+  - What am I doing today?
+  - Any blockers?
+
+Sync standup (video call) happens only on Mondays and Wednesdays at 9:00 AM ET for 15 minutes.
+All other days are async. If you need a quick sync, post in #payments-eng and someone will jump on a call.
+
+=== PR REVIEW PROCESS ===
+1. All code changes require at least one peer review before merging.
+2. Security-sensitive changes (auth, payment processing, PCI scope) require two reviewers,
+   one of whom must be a senior engineer or the EM.
+3. Target PR size: under 400 lines changed. Large PRs should be split into stacked PRs.
+4. PR description must include: summary of changes, how to test, and any rollback plan.
+5. Use the PR template in .github/pull_request_template.md.
+6. Reviewers should respond within one business day. If urgent, post in #payments-eng.
+7. Do not merge your own PR without approval, even for hotfixes (except P0 production incidents
+   with EM approval).
+
+=== CODING STANDARDS ===
+Language: Java 21 (backend), TypeScript (frontend/BFF), Python (data pipelines and scripts)
+Style guides:
+  - Java: Google Java Style Guide, enforced via Checkstyle in CI
+  - TypeScript: Airbnb ESLint config
+  - Python: PEP 8, enforced via ruff
+
+Tests:
+  - Unit test coverage requirement: 80% minimum on new code
+  - Integration tests required for any new API endpoint
+  - Load tests required for changes to high-throughput paths (>1000 req/s)
+  - Tests live alongside source code (src/test mirrors src/main)
+
+CI/CD:
+  - GitHub Actions runs lint, tests, and security scan on every PR
+  - Deploys to staging automatically on merge to main
+  - Production deployments require manual approval from EM or senior engineer
+  - Deployment windows: Tuesday–Thursday, 9:00–11:00 PM ET (maintenance window)
+  - Fridays, weekends, and holidays are code freeze unless P0 incident
+
+=== ON-CALL ROTATION ===
+On-call rotation is weekly, Mon–Sun. Schedule lives in PagerDuty.
+First responder: on-call engineer
+Escalation: EM (Priya Nair), then VP Engineering
+SLA for P0 incidents: acknowledge within 15 minutes, mitigate within 1 hour.
+
+=== TOOLS WE USE ===
+- GitHub: source control and code review
+- Jira: sprint planning and issue tracking (project key: PAY)
+- Confluence: longer-form documentation
+- Slack: day-to-day communication (#payments-eng, #payments-standup, #payments-incidents)
+- Grafana + Prometheus: metrics and dashboards
+- PagerDuty: on-call and incident management
+- LaunchDarkly: feature flags
+- Datadog: log aggregation and APM
+
+=== TEAM NORMS ===
+- Default to async communication. Don't expect immediate Slack responses.
+- Raise blockers early — don't wait until standup.
+- Be generous with code review. Critique the code, not the person.
+- When in doubt about scope, check with Priya before over-building.
+- Document decisions in Confluence, not in Slack threads that disappear.
+- WIP limit: no more than 2 in-progress items per engineer at a time.

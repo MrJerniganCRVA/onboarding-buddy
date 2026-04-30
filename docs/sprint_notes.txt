@@ -1,1 +1,46 @@
-Place to store information on sprint notes
+Acme Corp — Payments Team
+Sprint 24 Planning Notes
+Sprint Dates: April 21 – May 2, 2025
+Facilitator: Priya Nair (Engineering Manager)
+
+=== SPRINT GOALS ===
+1. Ship 3DS2 authentication support for EU card networks (P0)
+2. Reduce payment gateway timeout rate below 0.5% (P1)
+3. Complete fraud model v2 feature flag rollout to 10% of traffic (P1)
+4. Address three backlog items from the PCI DSS compliance audit (P2)
+
+=== ACTIVE WORKSTREAMS ===
+
+[WORKSTREAM 1] 3DS2 Authentication — Owner: Marcus Webb
+- Integrate Cardinal Commerce SDK into checkout flow
+- Unit tests for retry logic on failed authentication challenges
+- Coordinate with frontend team (Sasha Okonkwo) for iframe rendering
+- Status: In progress, 60% complete
+- Blockers: Waiting on Cardinal test credentials from vendor (ETA: Apr 23)
+
+[WORKSTREAM 2] Gateway Timeout Reduction — Owner: Devon Castillo
+- Root cause identified: connection pool exhaustion under burst traffic
+- Implementing adaptive connection pool sizing using HikariCP config tuning
+- Load testing with k6 scheduled for Apr 24
+- Status: In progress, 40% complete
+
+[WORKSTREAM 3] Fraud Model v2 Rollout — Owner: Amara Osei
+- Feature flag managed via LaunchDarkly
+- Rollout at 2% → 5% → 10% cadence with automated rollback trigger if false-positive rate exceeds 1.2%
+- Monitoring dashboards live in Grafana (dashboard: fraud-model-v2-rollout)
+- Status: 2% rollout complete, 5% scheduled for Apr 23
+
+[WORKSTREAM 4] PCI DSS Compliance Backlog — Owner: Marcus Webb + Priya Nair
+- TASK-4412: Rotate encryption keys for stored card tokens (scheduled Apr 25, maintenance window)
+- TASK-4389: Disable TLS 1.0/1.1 on payment API endpoints
+- TASK-4401: Add audit log for all admin-level API calls to /v2/admin/*
+- Status: TASK-4389 complete, others in progress
+
+=== CARRY-OVER FROM SPRINT 23 ===
+- Webhook retry dead-letter queue (DLQ) implementation — Devon Castillo — blocked on infra ticket (IFR-882)
+- Reconciliation report PDF export — Sasha Okonkwo — deprioritized, moved to Sprint 25
+
+=== TEAM NOTES ===
+- Retro from Sprint 23: team agreed to cap WIP at 2 items per engineer
+- Demo scheduled for May 2, 2:00 PM ET — stakeholders from Finance and Risk invited
+- New engineer (onboarding this week): coordinate with Marcus for codebase walkthrough

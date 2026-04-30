@@ -1,1 +1,56 @@
-Text description of the organizational chart
+Acme Corp — Payments Team Org Chart
+As of April 2025
+
+=== ENGINEERING MANAGER ===
+Priya Nair — Engineering Manager
+  - Overall team delivery, sprint planning, stakeholder communication
+  - Point of escalation for P0 incidents and cross-team dependencies
+  - Also owns: compliance coordination (PCI DSS, GDPR), hiring
+
+=== SENIOR ENGINEERS ===
+
+Marcus Webb — Senior Software Engineer
+  - Primary owner: Payment API contracts and versioning strategy
+  - Secondary owner: Encryption and tokenization (card vault, PCI scope)
+  - Tech lead for 3DS2 authentication integration (Sprint 24)
+  - Go-to person for: API design questions, security reviews, PCI compliance
+  - Tenure: 4 years at Acme Corp
+
+Devon Castillo — Senior Software Engineer / Platform Lead
+  - Primary owner: Payment gateway integrations (Stripe, Adyen, Chase Paymentech)
+  - Secondary owner: Infrastructure reliability, SLAs, connection pool management
+  - Owns: deployment pipeline and CI/CD tooling
+  - Go-to person for: gateway issues, latency problems, deployment process
+  - Tenure: 3 years at Acme Corp
+
+=== SOFTWARE ENGINEERS ===
+
+Amara Osei — Software Engineer II
+  - Primary owner: Fraud detection system (rules engine + ML scoring pipeline)
+  - Secondary owner: Risk scoring API, chargeback automation
+  - Leading fraud model v2 rollout in Sprint 24
+  - Go-to person for: fraud detection, risk signals, ML model integration
+  - Tenure: 2 years at Acme Corp
+
+Sasha Okonkwo — Software Engineer II
+  - Primary owner: Frontend checkout experience (React, TypeScript)
+  - Secondary owner: Backend-for-frontend (BFF) layer, webhook consumer UI
+  - Go-to person for: checkout UI, 3DS iframe, merchant-facing dashboard
+  - Tenure: 18 months at Acme Corp
+
+=== DATA / ANALYTICS (EMBEDDED) ===
+
+Lena Park — Data Engineer (embedded, reports to Data Platform team)
+  - Primary owner: Reconciliation pipeline and settlement reporting
+  - Maintains: Airflow DAGs for batch payment processing, S3 data lake ingestion
+  - Go-to person for: data discrepancies, reconciliation reports, batch jobs
+  - Tenure: 1 year at Acme Corp
+
+=== CROSS-FUNCTIONAL PARTNERS ===
+- Product Manager: Jordan Reeves (jordan.reeves@acmecorp.com)
+- Security / AppSec liaison: Raj Mehta (raj.mehta@acmecorp.com)
+- Legal / Compliance: Tasha Brennan (covers PCI, GDPR, payment regulations)
+- Finance (reconciliation stakeholder): Carl Huang
+
+=== REPORTING STRUCTURE ===
+Priya Nair → VP Engineering (Dominic Ferrara) → CTO (Helena Ortiz)

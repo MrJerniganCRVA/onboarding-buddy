@@ -1,4 +1,5 @@
 import streamlit as st
+from langchain_core.messages import HumanMessage, AIMessage
 from rag import load_chain
 
 st.set_page_config(page_title="Onboarding Buddy", page_icon="🤝")
@@ -21,10 +22,19 @@ if prompt := st.chat_input("Ask me anything about the Payments team..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    chat_history = []
+    for msg in st.session_state.messages[:-1]:
+        if msg["role"] == "user":
+            chat_history.append(HumanMessage(content=msg["content"]))
+        else:
+            chat_history.append(AIMessage(content=msg["content"]))
+
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            result = st.session_state.chain.invoke({"question": prompt})
-            answer = result["answer"]
+            answer = st.session_state.chain.invoke({
+                "question": prompt,
+                "chat_history": chat_history,
+            })
         st.markdown(answer)
 
     st.session_state.messages.append({"role": "assistant", "content": answer})

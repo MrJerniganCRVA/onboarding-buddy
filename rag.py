@@ -2,9 +2,9 @@ from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_anthropic import ChatAnthropic
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
-from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 
 load_dotenv()
 
@@ -25,6 +25,10 @@ suggest who the new employee might ask (e.g., a specific team member).
 - Keep answers focused and scannable — use bullet points when listing multiple items."""
 
 
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
+
 def load_chain():
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
 
@@ -40,26 +44,19 @@ def load_chain():
         temperature=0.3,
     )
 
-    memory = ConversationBufferMemory(
-        memory_key="chat_history",
-        return_messages=True,
-        output_key="answer",
-    )
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", SYSTEM_PROMPT + "\n\nContext from team documents:\n{context}"),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{question}"),
+    ])
 
-    chain = ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        retriever=retriever,
-        memory=memory,
-        return_source_documents=True,
-        verbose=False,
-        combine_docs_chain_kwargs={
-            "prompt": ChatPromptTemplate.from_messages([
-                SystemMessagePromptTemplate.from_template(
-                    SYSTEM_PROMPT + "\n\nContext from team documents:\n{context}"
-                ),
-                HumanMessagePromptTemplate.from_template("{question}"),
-            ])
-        },
+    chain = (
+        RunnablePassthrough.assign(
+            context=lambda x: format_docs(retriever.invoke(x["question"]))
+        )
+        | prompt
+        | llm
+        | StrOutputParser()
     )
 
     return chain

@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
-from langchain_anthropic import ChatAnthropic
+from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -39,8 +39,8 @@ def load_chain():
 
     retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
-    llm = ChatAnthropic(
-        model="claude-sonnet-4-20250514",
+    llm = ChatOllama(
+        model="tinyllama",
         temperature=0.3,
     )
 

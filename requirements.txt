@@ -3,6 +3,7 @@ chromadb
 langchain
 langchain-text-splitters
 langchain-anthropic
+langchain-ollama
 langchain-chroma
 langchain-community
 langchain-huggingface

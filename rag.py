@@ -40,7 +40,7 @@ def load_chain():
     retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
     llm = ChatOllama(
-        model="tinyllama",
+        model="llama3.2",
         temperature=0.3,
     )
 

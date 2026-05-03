@@ -30,11 +30,10 @@ if prompt := st.chat_input("Ask me anything about the Payments team..."):
             chat_history.append(AIMessage(content=msg["content"]))
 
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            answer = st.session_state.chain.invoke({
-                "question": prompt,
-                "chat_history": chat_history,
-            })
-        st.markdown(answer)
+        stream = st.session_state.chain.stream({
+            "question": prompt,
+            "chat_history": chat_history,
+        })
+        answer = st.write_stream(stream)
 
     st.session_state.messages.append({"role": "assistant", "content": answer})

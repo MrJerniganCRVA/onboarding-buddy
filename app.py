@@ -6,9 +6,26 @@ st.set_page_config(page_title="Onboarding Buddy", page_icon="🤝")
 st.title("🤝 Onboarding Buddy")
 st.caption("Your go-to for getting up to speed on the Payments team.")
 
-if "chain" not in st.session_state:
-    with st.spinner("Loading knowledge base..."):
-        st.session_state.chain = load_chain()
+# Sidebar persona selector
+persona_label = st.sidebar.radio(
+    "Persona",
+    ["👥 Coworker", "📋 HR Partner"],
+)
+persona = "coworker" if "Coworker" in persona_label else "hr"
+
+# Reload chain and clear history when persona changes
+if st.session_state.get("persona") != persona:
+    st.session_state.persona = persona
+    with st.spinner(f"Switching to {persona_label} mode..."):
+        st.session_state.chain = load_chain(persona)
+    st.session_state.messages = []
+
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    f"**Active:** {persona_label}\n\n"
+    + ("Answering as a senior teammate." if persona == "coworker"
+       else "Answering as an HR Business Partner.")
+)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []

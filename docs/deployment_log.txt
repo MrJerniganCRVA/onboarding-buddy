@@ -1,76 +1,83 @@
 Acme Corp — Payments Team
 Production Deployment Log
 
-=== DEPLOYMENT: v2.14.3 ===
-Date: April 18, 2025, 11:30 PM ET (maintenance window)
+=== DEPLOYMENT: v2.18.1 ===
+Date: May 1, 2026, 11:00 PM ET (maintenance window)
 Deployed by: Devon Castillo
 Reviewer: Marcus Webb
 Environment: Production (us-east-1, eu-west-1)
 Rollout strategy: Blue/green with 10-minute canary at 5% traffic
 
 BUG FIXES:
-- FIX-7821: Resolved race condition in idempotency key cache causing duplicate charge events
-  under high concurrency. Root cause was missing lock on Redis SET NX operation.
-- FIX-7834: Fixed NullPointerException in PaymentMethodService when Apple Pay token
-  response omitted the `billingContact` field (optional per spec but not handled).
-- FIX-7850: Corrected timezone handling bug in settlement batch job — batches scheduled
-  near DST transitions were running 1 hour early, causing off-cycle reconciliation.
-- FIX-7861: Webhook signature verification failed silently when payload exceeded 64 KB;
-  now returns HTTP 413 with descriptive error and logs alert.
+- FIX-8201: Fixed race condition in Visa Direct payout status polling — concurrent status
+  checks could overwrite a "settled" record with a stale "pending" response.
+- FIX-8209: Rate limiter sliding-window counters were not expiring correctly under Redis
+  cluster failover; fixed by adding TTL refresh on counter increment.
+- FIX-8215: Apple Pay session validation failed for merchants using custom payment domains
+  registered after March 2026; updated domain validation logic to pull from merchant config.
 
 STATUS: Deployment successful. No rollback required.
-Post-deploy error rate: 0.03% (within SLA). Latency p99: 142ms (baseline: 138ms, acceptable).
+Post-deploy error rate: 0.02% (within SLA). Latency p99: 138ms (baseline: 141ms, improvement).
 
 ---
 
-=== DEPLOYMENT: v2.14.2 ===
-Date: April 10, 2025, 10:00 PM ET
+=== DEPLOYMENT: v2.18.0 ===
+Date: April 22, 2026, 10:30 PM ET
 Deployed by: Amara Osei
 Reviewer: Priya Nair
-Environment: Production (us-east-1 only; EU rollout held pending GDPR review)
+Environment: Production (us-east-1, eu-west-1)
+Rollout strategy: Feature-flagged via LaunchDarkly; full rollout over 48 hours
+
+FEATURES:
+- Launched fraud model v3 in shadow mode — runs alongside v2, scores logged to BigQuery
+  for validation (does not affect transaction decisions yet)
+- New merchant webhook retry dashboard: GET /v2/admin/webhooks/retry-queue
+- Added structured audit logging for all /v2/admin/* endpoints (SOC 2 requirement TASK-5498)
 
 BUG FIXES:
-- FIX-7799: Payment capture incorrectly marked as failed when downstream processor returned
-  HTTP 202 (Accepted) instead of 200 (OK). Fixed status mapping in ProcessorResponseAdapter.
-- FIX-7803: Fraud scoring service returned cached score for new card BINs not yet in
-  the BIN lookup table. Now falls back to conservative default score (0.6) with a
-  cache-miss metric emitted for monitoring.
-- FIX-7811: Refund endpoint accepted negative amounts without validation, allowing
-  unintended credit creation. Added server-side guard (amount must be > 0 and ≤ original charge).
-
-STATUS: Deployment successful. EU rollout completed April 14 after GDPR sign-off from Legal.
-
----
-
-=== DEPLOYMENT: v2.14.1 ===
-Date: April 3, 2025, 9:00 PM ET
-Deployed by: Marcus Webb
-Reviewer: Devon Castillo
-
-BUG FIXES:
-- FIX-7778: Database connection leak in TransactionRepository under high read load.
-  Connection was not returned to pool when ResultSet iteration threw a runtime exception.
-- FIX-7780: API rate limiter was not applying per-merchant limits correctly for sub-accounts;
-  all sub-accounts shared the parent account's quota bucket.
-- FIX-7783: Stripe webhook event handler threw unhandled exception for `payment_intent.canceled`
-  event type introduced in Stripe API v2024-12-18.
+- FIX-8188: Settlement batch job skipped transactions created within the last 500ms of the
+  batch window due to an off-by-one in the timestamp range query.
+- FIX-8193: Google Pay token decryption failed intermittently when the token included
+  optional `intermediateSigningKey` field introduced in Google Pay API v2.1.
 
 STATUS: Deployment successful.
 
 ---
 
-=== DEPLOYMENT: v2.14.0 ===
-Date: March 24, 2025, 10:00 PM ET
-Deployed by: Sasha Okonkwo
-Reviewer: Amara Osei
-
-FEATURES:
-- Added support for Link payment method (Stripe)
-- Launched real-time fraud scoring v2 in shadow mode (logs scores, does not block transactions)
-- New reconciliation dashboard endpoint: GET /v2/reports/reconciliation
+=== DEPLOYMENT: v2.17.2 ===
+Date: April 10, 2026, 9:00 PM ET
+Deployed by: Marcus Webb
+Reviewer: Devon Castillo
+Environment: Production (us-east-1, eu-west-1)
 
 BUG FIXES:
-- FIX-7741: Fixed pagination bug in transaction list endpoint — cursor-based pagination
-  skipped records when multiple transactions shared the same `created_at` timestamp.
+- FIX-8161: Idempotency key TTL was set to 24h globally; reduced to 2h for refund
+  endpoints per PCI DSS guidance on replay attack windows.
+- FIX-8167: Reconciliation report endpoint returned HTTP 500 when date range spanned a
+  DST boundary; fixed timezone normalization in ReportQueryBuilder.
+- FIX-8170: Sub-account rate limit quota was shared with parent account when
+  sub-account had no explicit limit configured; now defaults to 20% of parent quota.
+
+STATUS: Deployment successful.
+
+---
+
+=== DEPLOYMENT: v2.17.0 ===
+Date: March 28, 2026, 11:00 PM ET
+Deployed by: Sasha Okonkwo
+Reviewer: Amara Osei
+Environment: Production (us-east-1, eu-west-1)
+
+FEATURES:
+- Launched payout reconciliation report v2 with line-item breakdown by payment method
+- Added support for SEPA Direct Debit payment method (EU merchants only)
+- New endpoint: POST /v2/payouts/instant — routes to Visa Direct (Visa cards) or RTP
+  network (bank accounts); currently behind feature flag INSTANT_PAYOUTS_ENABLED
+
+BUG FIXES:
+- FIX-8140: Webhook signature verification timeout was hardcoded to 5s; now configurable
+  per merchant to accommodate high-latency integrations.
+- FIX-8144: Transaction list endpoint returned duplicate records when paginating across
+  a time boundary where clock skew between DB replicas exceeded 10ms.
 
 STATUS: Deployment successful.
